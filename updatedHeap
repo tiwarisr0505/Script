@@ -101,4 +101,21 @@ do
     if [ -f "$LATEST_LOG" ]; then
         grep -i "Started" "$LATEST_LOG" >/dev/null
         if [ $? -eq 0 ]; then
-            echo "Restart
+            echo "Restart confirmed for $APPSPACE"
+            ((SUCCESS_COUNT++))
+        else
+            echo "WARNING: Restart not confirmed in logs"
+            ((FAIL_COUNT++))
+        fi
+    else
+        echo "WARNING: Log file not found"
+        ((FAIL_COUNT++))
+    fi
+
+done < "$INPUT_FILE"
+
+echo "=========================================================="
+echo "Bulk Operation Completed"
+echo "Successful Updates : $SUCCESS_COUNT"
+echo "Failed Updates     : $FAIL_COUNT"
+echo "=========================================================="
