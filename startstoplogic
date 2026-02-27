@@ -1,0 +1,83 @@
+echo "Checking AppNode status..."
+
+NODE_STATUS=$(bwadmin show appnode -d "$DOMAIN" -n "$APPNODE" | awk -F': ' '/State/ {print $2}')
+
+echo "Current Status: $NODE_STATUS"
+
+# -------------------------------
+# If Node is RUNNING
+# -------------------------------
+if [ "$NODE_STATUS" = "Running" ]; then
+
+    echo "Step 1: Stopping AppNode..."
+    bwadmin stop appnode -d "$DOMAIN" -n "$APPNODE"
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to stop AppNode"
+        ((FAIL_COUNT++))
+        FAILED_NODES+=("$APPNODE")
+        continue
+    fi
+
+    sleep 5
+
+    echo "Step 2: Starting AppNode..."
+    bwadmin start appnode -d "$DOMAIN" -n "$APPNODE"
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to start AppNode"
+        ((FAIL_COUNT++))
+        FAILED_NODES+=("$APPNODE")
+        continue
+    fi
+
+    sleep 10
+
+    echo "Step 3: Stopping AppNode again..."
+    bwadmin stop appnode -d "$DOMAIN" -n "$APPNODE"
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to stop AppNode (final)"
+        ((FAIL_COUNT++))
+        FAILED_NODES+=("$APPNODE")
+        continue
+    fi
+
+    echo "Restart cycle completed successfully."
+    ((SUCCESS_COUNT++))
+    SUCCESS_NODES+=("$APPNODE")
+
+# -------------------------------
+# If Node is STOPPED
+# -------------------------------
+elif [ "$NODE_STATUS" = "Stopped" ]; then
+
+    echo "Step 1: Starting AppNode..."
+    bwadmin start appnode -d "$DOMAIN" -n "$APPNODE"
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to start AppNode"
+        ((FAIL_COUNT++))
+        FAILED_NODES+=("$APPNODE")
+        continue
+    fi
+
+    sleep 10
+
+    echo "Step 2: Stopping AppNode..."
+    bwadmin stop appnode -d "$DOMAIN" -n "$APPNODE"
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to stop AppNode"
+        ((FAIL_COUNT++))
+        FAILED_NODES+=("$APPNODE")
+        continue
+    fi
+
+    echo "Start-Stop cycle completed successfully."
+    ((SUCCESS_COUNT++))
+    SUCCESS_NODES+=("$APPNODE")
+
+# -------------------------------
+# Any Other State
+# -------------------------------
+else
+    echo "ERROR: Unknown AppNode state: $NODE_STATUS"
+    ((FAIL_COUNT++))
+    FAILED_NODES+=("$APPNODE")
+fi
