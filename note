@@ -1,0 +1,47 @@
+echo "Checking AppNode status..."
+
+NODE_STATUS=$(bwadmin show appnode -d "$DOMAIN" -n "$APPNODE" | grep -i "State")
+
+echo "Current Status: $NODE_STATUS"
+
+if echo "$NODE_STATUS" | grep -qi "Running"; then
+    echo "Stopping AppNode..."
+    bwadmin stop appnode -d "$DOMAIN" -n "$APPNODE"
+
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to stop AppNode"
+        ((FAIL_COUNT++))
+        continue
+    fi
+
+    sleep 5
+else
+    echo "AppNode already stopped. Skipping stop."
+fi
+
+
+
+
+status
+
+echo "=========================================================="
+echo "Bulk Operation Completed"
+echo "Successful Updates : $SUCCESS_COUNT"
+echo "Failed Updates     : $FAIL_COUNT"
+echo "----------------------------------------------------------"
+
+if [ ${#SUCCESS_NODES[@]} -gt 0 ]; then
+    echo "Successful AppNodes:"
+    for node in "${SUCCESS_NODES[@]}"; do
+        echo "  - $node"
+    done
+fi
+
+if [ ${#FAILED_NODES[@]} -gt 0 ]; then
+    echo "Failed AppNodes:"
+    for node in "${FAILED_NODES[@]}"; do
+        echo "  - $node"
+    done
+fi
+
+echo "=========================================================="
