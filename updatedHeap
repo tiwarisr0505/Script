@@ -1,0 +1,88 @@
+#!/bin/bash
+
+echo "========== BW6 Bulk Heap Update (Extended Properties) =========="
+
+# ---- Set bwadmin full path ----
+BWADMIN_PATH="/opt/tibco/bw/6.8/bin/bwadmin"
+
+if [ ! -x "$BWADMIN_PATH" ]; then
+    echo "ERROR: bwadmin not found at $BWADMIN_PATH"
+    exit 1
+fi
+
+read -p "Enter full path of input .txt file: " INPUT_FILE
+
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "ERROR: Input file not found!"
+    exit 1
+fi
+
+SUCCESS_COUNT=0
+FAIL_COUNT=0
+
+while IFS=',' read -r DOMAIN APPSPACE TRA_FILE HEAP_MAX HEAP_MIN
+do
+    echo "----------------------------------------------------------"
+    echo "Processing: $DOMAIN | $APPSPACE"
+    echo "----------------------------------------------------------"
+
+    if [ ! -f "$TRA_FILE" ]; then
+        echo "ERROR: TRA file not found"
+        ((FAIL_COUNT++))
+        continue
+    fi
+
+    # Backup
+    cp $TRA_FILE ${TRA_FILE}.bak_$(date +%Y%m%d_%H%M%S)
+
+    echo "Updating heap in java.extended.properties..."
+
+    # Update -Xmx
+    sed -i "s/-Xmx[0-9]*[mMgG]*/-Xmx$HEAP_MAX/" $TRA_FILE
+
+    # Update -Xms
+    sed -i "s/-Xms[0-9]*[mMgG]*/-Xms$HEAP_MIN/" $TRA_FILE
+
+    if [ $? -ne 0 ]; then
+        echo "Heap update failed."
+        ((FAIL_COUNT++))
+        continue
+    fi
+
+    echo "Heap updated successfully."
+
+    # Stop AppNode
+    echo "Stopping AppNode..."
+    $BWADMIN_PATH stop appnode -d $DOMAIN -a $APPSPACE
+    sleep 5
+
+    # Start AppNode
+    echo "Starting AppNode..."
+    $BWADMIN_PATH start appnode -d $DOMAIN -a $APPSPACE
+    sleep 15
+
+    # Validate via logs
+    LOG_DIR=$(dirname $TRA_FILE)/logs
+    LATEST_LOG=$(ls -t $LOG_DIR/*.log 2>/dev/null | head -1)
+
+    if [ -f "$LATEST_LOG" ]; then
+        grep -i "Started" $LATEST_LOG >/dev/null
+        if [ $? -eq 0 ]; then
+            echo "Restart confirmed for $APPSPACE"
+            ((SUCCESS_COUNT++))
+        else
+            echo "Restart NOT confirmed for $APPSPACE"
+            ((FAIL_COUNT++))
+        fi
+    else
+        echo "Log file not found"
+        ((FAIL_COUNT++))
+    fi
+
+done < "$INPUT_FILE"
+
+echo "=========================================================="
+echo "Bulk Operation Completed"
+echo "Successful Updates : $SUCCESS_COUNT"
+echo "Failed Updates     : $FAIL_COUNT"
+echo "=========================================================="
