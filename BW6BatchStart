@@ -1,0 +1,88 @@
+#!/bin/bash
+
+#############################################
+# Configuration
+#############################################
+
+TIBCO_HOME="/opt/tibco"
+BW_ADMIN="$TIBCO_HOME/bw/6.10/bin/bwadmin"
+
+INPUT_FILE="nodes.txt"
+OUTPUT_FILE="bw_status_$(date +%Y%m%d_%H%M%S).txt"
+
+APPNODE_SLEEP=30
+APP_SLEEP=10
+
+echo "Domain,AppSpace,AppNode,Application,ApplicationStatus" | tee -a $OUTPUT_FILE
+
+#############################################
+# Read Input File
+#############################################
+
+while IFS=',' read DOMAIN APPSPACE APPNODE
+do
+
+echo "--------------------------------------"
+echo "Processing Domain=$DOMAIN AppSpace=$APPSPACE AppNode=$APPNODE"
+
+#############################################
+# Check AppNode Status
+#############################################
+
+APPNODE_STATUS=$($BW_ADMIN show appnodes -domain $DOMAIN -appspace $APPSPACE | grep $APPNODE | awk '{print $3}')
+
+echo "Current AppNode Status: $APPNODE_STATUS"
+
+if [[ "$APPNODE_STATUS" != "Running" ]]
+then
+    echo "AppNode $APPNODE is STOPPED. Starting..."
+
+    $BW_ADMIN start appnode $APPNODE -appspace $APPSPACE -domain $DOMAIN
+
+    echo "Waiting $APPNODE_SLEEP seconds for AppNode startup..."
+    sleep $APPNODE_SLEEP
+fi
+
+#############################################
+# Fetch Applications
+#############################################
+
+APPS=$($BW_ADMIN show applications -domain $DOMAIN -appspace $APPSPACE | awk '{print $1}' | grep -v Name)
+
+#############################################
+# Check Application Status
+#############################################
+
+for APP in $APPS
+do
+
+APP_STATUS=$($BW_ADMIN show application $APP -domain $DOMAIN -appspace $APPSPACE | grep State | awk '{print $2}')
+
+if [[ "$APP_STATUS" != "Running" ]]
+then
+    echo "Application $APP is NOT running. Starting..."
+
+    $BW_ADMIN start application $APP -appspace $APPSPACE -domain $DOMAIN
+
+    echo "Waiting $APP_SLEEP seconds for application startup..."
+    sleep $APP_SLEEP
+
+    APP_STATUS="Started"
+fi
+
+#############################################
+# Output Result
+#############################################
+
+RESULT="$DOMAIN,$APPSPACE,$APPNODE,$APP,$APP_STATUS"
+
+echo $RESULT | tee -a $OUTPUT_FILE
+
+done
+
+done < $INPUT_FILE
+
+
+echo "--------------------------------------"
+echo "Execution Completed"
+echo "Output file: $OUTPUT_FILE"
