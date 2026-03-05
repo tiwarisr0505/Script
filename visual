@@ -1,0 +1,36 @@
+Start
+  │
+  ▼
+Read appNodes.txt
+  │
+  ▼
+Check AppNode
+  │
+  ├─ Running → Continue
+  │
+  └─ Stopped → Start AppNode
+                   │
+                   ▼
+             Wait (Sleep)
+  │
+  ▼
+Fetch Applications
+  │
+  ▼
+Check Application Status
+  │
+  ├─ Running → Record Status
+  │
+  └─ Stopped → Start Application
+                     │
+                     ▼
+               Wait (Sleep)
+  │
+  ▼
+Write CSV Output
+  │
+  ▼
+Next Application / Node
+  │
+  ▼
+Finish
