@@ -1,0 +1,21 @@
+^([^,]+),([^,]+)
+
+\1,\2,\2
+
+^        = start of line
+([^,]+)  = first column (before comma)
+,        = comma separator
+([^,]+)  = second column
+
+\1 = first column
+\2 = second column
+\2 = duplicate second column
+
+So it converts:
+Copy code
+
+A,B
+into
+Copy code
+
+A,B,B
