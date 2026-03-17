@@ -1,0 +1,40 @@
+Hi [Manager Name],
+
+I would like to propose an improvement in our current Citrix health check mechanism for BW6 applications to enhance API availability and reduce avoidable incidents.
+
+1. Current Situation & Limitation
+At present, Citrix primarily performs port-level (TCP) health checks. This only verifies whether the AppNode is up and listening on the configured port. However, it does not confirm whether the application deployed within the AppNode is actually running.
+
+2. Problem Statement
+In scenarios where the AppNode is running but the application is stopped or unavailable, Citrix still considers the server as healthy and routes traffic to it. This results in API failures (e.g., HTTP 404/503), leading to unnecessary incident tickets and troubleshooting efforts.
+
+3. Proposed Solution (Application-Level Health Check)
+We can configure Citrix to perform HTTP-based health checks using a specific API endpoint (e.g., /health or a lightweight status API).
+This ensures that:
+
+- Traffic is routed only to nodes where the application is actively running
+- Nodes with stopped/unhealthy applications are automatically marked down
+
+4. Proof of Concept (POC)
+As a starting point, we can implement this for 1–2 critical APIs:
+
+- Expose a simple health endpoint in BW6 (if not already available)
+- Configure Citrix to monitor this endpoint
+- Validate behavior during application stop/start scenarios
+
+5. Effort Estimation
+
+- BW6 side (health endpoint verification/creation): Minimal effort
+- Citrix configuration: Coordination with infra team (moderate effort)
+- Testing & validation: 1–2 cycles during controlled activity
+
+Overall, this is a low-to-medium effort change with significant benefits in terms of stability, monitoring accuracy, and reduction in false alerts.
+
+---
+
+This enhancement will help ensure that traffic is routed only to healthy application instances, improving system reliability and reducing avoidable production issues.
+
+Please let me know if we can proceed with a POC or discuss this further.
+
+Regards,
+PT
