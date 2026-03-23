@@ -1,0 +1,3 @@
+Hi Veera,
+Could you please schedule a call with the team to discuss the pipeline issues we’ve been experiencing? Instead of relying on manual start/stop from the backend or admin, we should review a more stable approach.
+As far as I understand, for BW6 this was earlier handled using TEA admin credentials. However, since we are now dependent on pipelines—which have been intermittently failing or not working—we need to address this collectively.
