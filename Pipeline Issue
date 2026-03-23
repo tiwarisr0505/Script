@@ -1,3 +1,7 @@
 Hi Veera,
+
 Could you please schedule a call with the team to discuss the pipeline issues we’ve been experiencing? Instead of relying on manual start/stop from the backend or admin, we should review a more stable approach.
-As far as I understand, for BW6 this was earlier handled using TEA admin credentials. However, since we are now dependent on pipelines—which have been intermittently failing or not working—we need to address this collectively.
+
+As far as I understand, for BW6/BW5, this is handled through using TEA/BW5 admin credentials till now from from them.
+Please refer to the Dipti Screenshot of TEA in common TIBCO RTB group.
+However, since dependent on ADI pipelines—which have been intermittently failing or not working—we need to address this collectively.
