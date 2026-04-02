@@ -1,0 +1,22 @@
+Hi Team,
+We have analyzed the reported 4xx alerts for Application MercuryFxRateCard (Ref: UR0142964).
+Findings:
+The 4xx errors are being returned from the downstream API (/getRate/rfq/status/update) during REST invocation.
+These errors are intermittent and observed after multiple successful requests.
+From backend verification, the transactions are processed successfully, which indicates that the business processing is not impacted.
+Root Cause:
+The issue is primarily due to high concurrent API calls from BW, leading to:
+Connection saturation and waiting threads
+Intermittent 4xx responses from the downstream system (possibly due to throttling or request handling limits)
+Additionally, SocketTimeout was configured as 0 (infinite), causing threads to wait indefinitely and increasing load on the system.
+Corrective Actions Taken / Recommended:
+Configure SocketTimeout to a finite value (e.g., 15–30 seconds) to avoid thread blocking
+Optimize MaxTotalConnections to control concurrent load
+Introduce throttling / controlled request rate from BW to avoid overwhelming the downstream API
+Implement retry mechanism with backoff for transient failures
+Conclusion:
+These 4xx alerts are transient and environmental (load-related) rather than functional failures.
+Since backend processing is successful, these can be treated as non-critical / false-positive alerts, provided the above optimizations are implemented.
+Please let us know if any further clarification is required.
+Thanks & Regards,
+[Your Name]
